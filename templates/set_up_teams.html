@@ -1,0 +1,115 @@
+{% extends "layout.html" %}
+
+{% block body %}
+
+    <h1>Game Setup</h1>
+
+    <h2>Inning Count</h2>
+    <form action="/new_game" name="team_list" method="post">
+    <table>
+        <thead><input autocomplete="off" name="innings" placeholder="How many innings would you like to play?" type="text"></thead>
+    </table>
+    <h2>Lineups</h2>
+    <table class="row column team_creation">
+        <caption>Away Team</caption>
+        <thead>
+            <tr>
+                <th>Position</th>
+                <th>Player Name</th>
+                <th>MLB Team</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for player in range(10) %}
+                <tr>
+                    <td>
+                        {% if player == 0 %}
+                            P
+                        {% else %}
+                            {{player}}.
+                        {% endif %}
+                    </td>
+                    <td>
+                        {% if player == 0 %}
+                            SP
+                        {% else %}
+                            <select name="position_a">
+                                <option disable selected>Position</option>
+                                {% for position in positions %}
+                                    <option>{{position}}</option>
+                                {% endfor %}
+                            </select>
+                        {% endif %}
+                    </td>
+                    <td width="100px">
+                        {% if player == 0 %}
+                            <input autocomplete="off" name="startername_a" placeholder="Input starting pitcher name here..." type="text"></td>
+                        {% else %}
+                            <!--<input autocomplete="off" name="playername_a" placeholder="Input hitter name here..." type="text"></td>-->
+                            <input autocomplete="off" name="playername_a" placeholder="Test" type="text"></td>
+                        {% endif %}
+                    <td>
+                        <select name="team_a">
+                            <!--<option disable selected>MLB Team</option>-->
+                            {% for team in teams %}
+                                <option>{{team}}</option>
+                            {% endfor %}
+                        </select>
+                    </td>
+                </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+    <table class="row column team_creation">
+        <caption size="44px">Home Team</caption>
+        <thead>
+            <tr>
+                <th>Position</th>
+                <th>Player Name</th>
+                <th>MLB Team</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for player in range(10) %}
+                <tr>
+                    <td>
+                        {% if player == 0 %}
+                            P
+                        {% else %}
+                            {{player}}.
+                        {% endif %}
+                    </td>
+                    <td>
+                        {% if player == 0 %}
+                            SP
+                        {% else %}
+                            <select name="position_h">
+                                <option disable selected>Position</option>
+                                {% for position in positions %}
+                                    <option>{{position}}</option>
+                                {% endfor %}
+                            </select>
+                        {% endif %}
+                    </td>
+                    <td width="100px">
+                        {% if player == 0 %}
+                            <input autocomplete="off" name="startername_h" placeholder="Input starting pitcher name here..." type="text"></td>
+                        {% else %}
+                            <input autocomplete="off" name="playername_h" placeholder="Input hitter name here..." type="text"></td>
+                        {% endif %}
+                    <td>
+                        <select name="team_h">
+                            <!--<option disable selected>MLB Team</option>-->
+                            {% for team in teams %}
+                                <option>{{team}}</option>
+                            {% endfor %}
+                        </select>
+                    </td>
+                </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    <input type="submit" value="Submit for team generation!">
+    </form>
+{% endblock %}
