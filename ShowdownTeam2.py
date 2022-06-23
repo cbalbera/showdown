@@ -12,8 +12,7 @@ One starting pitcher is designated as the active starting pitcher using a boolea
 """
 
 import PlayerCard2
-import pyperclip
-import PlayerCardCreator2
+# import PlayerCardCreator2 #currently unused here
 
 # A lineup is a list of 9 batters who each are assigned one position.
 # Batting order is stored as a string of PlayerCards
@@ -81,9 +80,7 @@ class Lineup(list):
         return self._availablePlayers
     
     def setLineup(self,gameDict,lineup=None): #critical, as this is the only function called in the initializer
-        # important - have the set of cards copied to clipboard before start, otherwise game will crash
-        #gameDict = PlayerCardCreator2.createCards() # dictionary of possible cards
-        # temporary - for testing purposes
+        
         self._availablePlayers = gameDict
 
         theLineup = []

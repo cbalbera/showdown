@@ -4,24 +4,21 @@ from math import floor
 from psycopg2.extras import RealDictCursor
 import sys
 import team_data_scraper
-from clear_postgres import clear
+#from clear_postgres import clear
 import logging
+import os
 
 logging.basicConfig(level=logging.DEBUG, format='%(asctime)s -  %(levelname)s-  %(message)s')
 logging.disable(logging.INFO)
 logging.debug('Start of player_data_scraper')
 
-db_name = "postgres" #input("What is your database name?")
-try: db_pwd = sys.argv[1]
-except: db_pwd = input("What is your database password?")
+db_name = "showdown"
+db_pwd = os.environ["PSQL_DB_PASSWORD"]
 showdown_connection = psycopg2.connect(f"dbname={db_name} user=postgres host=/tmp password={db_pwd}")
 showdown_cursor = showdown_connection.cursor(cursor_factory=RealDictCursor)
-if len(sys.argv) == 3: 
-    if sys.argv[2].lower() == "clear":
-        clear(showdown_cursor,showdown_connection)
-logging.debug("creating tables")
 
-try: 
+#showdown_cursor.execute("CREATE TABLE IF NOT EXISTS pitcher_stats (id int PRIMARY KEY, team text, firstname text, lastname text, position text, throws char, bats char,inningspitched int,abs_against int, strikeouts int, groundouts int, flyouts int, walks int, hits int, non_hr_xbh int, home_runs int, games int, starts int, earned_runs int, save_chances int) ")
+"""try: 
     showdown_cursor.execute("CREATE TABLE pitcher_stats (id int PRIMARY KEY, team text, firstname text, lastname text, position text, throws char, bats char,inningspitched int,abs_against int, strikeouts int, groundouts int, flyouts int, walks int, hits int, non_hr_xbh int, home_runs int, games int, starts int, earned_runs int, save_chances int) ")
     showdown_connection.commit()
 except psycopg2.errors.DuplicateTable:
@@ -30,8 +27,11 @@ except psycopg2.errors.DuplicateTable:
     showdown_cursor.execute("DROP TABLE pitcher_stats;")
     showdown_connection.commit()
     showdown_cursor.execute("CREATE TABLE pitcher_stats (id int PRIMARY KEY, team text, firstname text, lastname text, position text, throws char, bats char,inningspitched int,abs_against int, strikeouts int, groundouts int, flyouts int, walks int, hits int, non_hr_xbh int, home_runs int, games int, starts int, earned_runs int, save_chances int) ")
-    showdown_connection.commit()
-try: 
+    showdown_connection.commit()"""
+
+#showdown_cursor.execute("CREATE TABLE IF NOT EXISTS hitter_stats (id int PRIMARY KEY, team text, firstname text, lastname text, position text, throws char, bats char,at_bats int, strikeouts int, groundouts int, flyouts int, walks int, hits int, doubles int, triples int, home_runs int, sb_attempts int, sb_percentage text, field_percentage text, range_factor text) ")
+# above is alternative to
+"""try: 
     showdown_cursor.execute("CREATE TABLE hitter_stats (id int PRIMARY KEY, team text, firstname text, lastname text, position text, throws char, bats char,at_bats int, strikeouts int, groundouts int, flyouts int, walks int, hits int, doubles int, triples int, home_runs int, sb_attempts int, sb_percentage text, field_percentage text, range_factor text) ")
     showdown_connection.commit()
 except psycopg2.errors.DuplicateTable:
@@ -40,7 +40,9 @@ except psycopg2.errors.DuplicateTable:
     showdown_cursor.execute("DROP TABLE hitter_stats;")
     showdown_connection.commit()
     showdown_cursor.execute("CREATE TABLE hitter_stats (id int PRIMARY KEY, team text, firstname text, lastname text, position text, throws char, bats char,at_bats int, strikeouts int, groundouts int, flyouts int, walks int, hits int, doubles int, triples int, home_runs int, sb_attempts int, sb_percentage text, field_percentage text, range_factor text) ")
-    showdown_connection.commit()
+    """
+
+#other alternative, maybe cleaner
 
 TEAMS = ["Arizona Diamondbacks",
 "Atlanta Braves",
@@ -74,13 +76,25 @@ TEAMS = ["Arizona Diamondbacks",
 "Washington Nationals"]
 
 #testIDs = [605135,471911,621242,607625,493603,656849,592741,592836,621512,605204,592192,656941,572287,624413,500871,641645,643446,596019,516782,607043,592450,670541,502671,608070,669203,543037,663556,605397,571578,608566,518735,595879,600869,453286,645261]
+#teams = input("Please select MLB teams from which to pull player data.")
 logging.debug("before calling getPlayerIDs")
-player_IDs = team_data_scraper.getPlayerIDs()
 
-print("Preparing list of players for processing...")
+#for test purposes
+#teams = "Mets,Braves"
 
-def scrape_data():
+#get list of player IDs
+#player_IDs = team_data_scraper.getPlayerIDs(teams)
 
+#print("Preparing list of players for processing...")
+
+def scrape_data(player_IDs):
+    showdown_cursor.execute('DROP TABLE IF EXISTS pitcher_stats;')
+    showdown_cursor.execute('DROP TABLE IF EXISTS hitter_stats;')
+    showdown_cursor.execute("CREATE TABLE pitcher_stats (id int PRIMARY KEY, team text, firstname text, lastname text, position text, throws char, bats char,inningspitched int,abs_against int, strikeouts int, groundouts int, flyouts int, walks int, hits int, non_hr_xbh int, home_runs int, games int, starts int, earned_runs int, save_chances int) ")
+    showdown_cursor.execute("CREATE TABLE hitter_stats (id int PRIMARY KEY, team text, firstname text, lastname text, position text, throws char, bats char,at_bats int, strikeouts int, groundouts int, flyouts int, walks int, hits int, doubles int, triples int, home_runs int, sb_attempts int, sb_percentage text, field_percentage text, range_factor text) ")
+
+    showdown_connection.commit()
+    #player_IDs = team_data_scraper.getPlayerIDs(teams)
     for i in player_IDs: #range(600303,625000): #reduced for testing
         try: player_stats = statsapi.player_stat_data(i)
         except: continue
@@ -202,3 +216,4 @@ def scrape_data():
 
     # commit adds to DB
     showdown_connection.commit()
+    showdown_connection.close()

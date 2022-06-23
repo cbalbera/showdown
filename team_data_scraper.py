@@ -10,15 +10,50 @@ logging.debug('Start of team_data_scraper')
 
 #try: teams_list = sys.argv[1] #this would allow easy segmenting of which cards to use (by division?  by league?  by team name? etc.)
 
-team_IDs = [121, 133, 134]#, 135, 136,137,138,139,140,141,142,143,144,145,146,147,158,108,109,110,111,112,113,114,115,116,117,118,119,120] # moved Mets to the start :)
+#team_IDs = [121, 133, 134]#, 135, 136,137,138,139,140,141,142,143,144,145,146,147,158,108,109,110,111,112,113,114,115,116,117,118,119,120] # moved Mets to the start :)
+
+teams_list = {'Athletics': 133, "A's":133, 'As': 133,
+'Pirates': 134,
+'Padres': 135,
+'Mariners': 136,
+'Giants': 137,
+'Cardinals': 138,
+'Rays': 139,
+'Rangers': 140,
+'Blue Jays': 141,
+'Twins': 142,
+'Phillies': 143,
+'Braves': 144,
+'White Sox': 145,
+'Marlins': 146,
+'Yankees': 147,
+'Brewers': 158,
+'Angels': 108,
+'D-backs': 109,'Diamondbacks': 109,
+'Orioles': 110,
+'Red Sox': 111,
+'Cubs': 112,
+'Reds': 113,
+'Guardians': 114,
+'Rockies': 115,
+'Tigers': 116,
+'Astros': 117,
+'Royals': 118,
+'Dodgers': 119,
+'Nationals': 120,
+'Mets': 121}
 
 player_IDs = []
 
 players_per_team_type = 9 #increase for more coverage, reduce for better speed
 
-def getPlayerIDs():
+def getPlayerIDs(teams):
     logging.debug("Creating list of players...")
-    for i in team_IDs:
+    teams_to_add = teams.split(",")
+    teams_to_pull = []
+    for i in teams_to_add:
+        teams_to_pull.append(teams_list[i.strip()])
+    for i in teams_to_pull:
         logging.debug(f"team id {i}")
         # look up players_per_team_type number of hitters & pitchers per team
         hitters = statsapi.team_leaders(i,"gamesPlayed",limit=(players_per_team_type+1))

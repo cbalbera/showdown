@@ -5,12 +5,10 @@ Attributes include point value, position, control (pitchers only), on-base (batt
 Outcome ranges for pitchers include Out(PU), Out(SO), Out(GB), Out(FB), BB, 1B, 2B, and HR.
 Outcome ranges for pitchers include Out(SO), Out(GB), Out(FB), BB, 1B, 1B+ 2B, 3B and HR.
 
-TODO: pull live data from a source & turn that data into a card.
-
-TODO: create attribute "photo" that just pulls a photo for display
+TODO: create attribute "photo" that pulls a photo for display
 """
 
-class PlayerCard: # nothing should ever be of class PlayerCard, & all cards should use the PitcherCard or BatterCard subtypes; as such, there is no initializer
+class PlayerCard: # this functions like an interface in Java (i.e. nothing should ever be of class PlayerCard, & all cards should use the PitcherCard or BatterCard subtypes; as such, there is no initializer)
     # GETTERS AND SETTERS
     
     def getPointValue(self):
@@ -160,7 +158,6 @@ class BatterCard(PlayerCard):
         #TODO: add error messages to each assertion
         assert isinstance(nameFirst, str)
         assert isinstance(nameLast, str)
-        # the below line currently allows Position to be only 'LF', which I'll accept for now to mean LF/RF.
         assert Position1 == "C" or Position1 == "1B" or Position1 == "2B" or Position1 == "3B" or Position1 == "SS" or Position1 == "LF/RF" or Position1 == "CF" or Position1 == "OF" or Position1 == "IF" or Position1 == "2B/SS" or Position1 == "2B/3B" or Position1 == "-" or Position1 == "LFRF" or Position1 == "DH" or Position1 == "LF" or Position1 == "RF", "Position1 was passed "+str(Position1)+" for "+nameFirst+" "+nameLast+", which caused a fail."
         assert isinstance(Fielding1, int)
         assert Fielding1 >= -1

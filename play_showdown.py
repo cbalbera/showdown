@@ -1,25 +1,25 @@
+print("importing play")
+import team_data_scraper
+print("Imported team,trying player")
 import player_data_scraper
-import Gameplay2
+print("imported player, trying gameplay")
+import Gameplay_forweb
 
-"""
-teams = input("Which teams would you like to play with? Please place the home team first & separate with commas.")
+print("imported modules")
 
-teams_list = teams.split(teams,",")
-"""
-#check there are two teams
+def get_cards(teams):
+    # create list of player IDs
+    ids = team_data_scraper.getPlayerIDs(teams)
+    print("done scraping team data")
+    # push player data to postgres
+    player_data_scraper.scrape_data(ids)
+    print("player data scraped")
 
-#otherwise, re-input/reject
+def playBall(home,away,inning_count):
+    print("about to call Gameplay")
+    Gameplay_forweb.Gameplay(homeTeam=home,awayTeam=away,innings=inning_count)
 
-"""for team in teams_list:
-    # pulls all new data, updating cards where necessary
-    player_data_scraper.getPlayerData(team)
-    #create cards from data
-
-    #prompt to create lineup from cards"""
-
-player_data_scraper.scrape_data()
-
-Gameplay2.Gameplay(homeTeam="testLineup.txt",awayTeam="testLineup.txt",innings=3)
+print("all imported in play")
 ''' start! This calls the initializer.  What should happen now:
 
 1. The players are prompted to input how many innings they will play.

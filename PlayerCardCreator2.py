@@ -6,18 +6,15 @@ import math
 import PlayerCard2
 from psycopg2.extras import RealDictCursor
 import sys
-
-db_name = "postgres" #input("What is your database name?")
-try: 
-    db_pwd = sys.argv[-1]
-    showdown_connection = psycopg2.connect(f"dbname={db_name} user=postgres host=/tmp password={db_pwd}")
-except: 
-    db_pwd = input("What is your database password?")
-    showdown_connection = psycopg2.connect(f"dbname={db_name} user=postgres host=/tmp password={db_pwd}")
-showdown_cursor = showdown_connection.cursor(cursor_factory=RealDictCursor)
+import os
 
 # pitcher cards
 def createCards():
+    db_name = "showdown"
+    db_pwd = os.environ["PSQL_DB_PASSWORD"]
+    showdown_connection = psycopg2.connect(f"dbname={db_name} user=postgres host=/tmp password={db_pwd}")
+    showdown_cursor = showdown_connection.cursor(cursor_factory=RealDictCursor)
+
     deckOfCards = {}
 
     showdown_cursor.execute("SELECT * FROM pitcher_stats") #WHERE team like 'New York Mets'") # use Mets only for testing
@@ -422,6 +419,7 @@ def createCards():
         #print(f"card is {card.getName()} and fielding is {card.getFielding()}")
         try: deckOfCards.setdefault(nameFirst +" "+ nameLast + " " + team,card) # Adds to dictionary {name+team+position, PlayerCard}
         except: print("we threw an error at "+nameFirst +" "+ nameLast)
+    showdown_connection.close()
     return deckOfCards
 
 #createCards() #for testing purposes
