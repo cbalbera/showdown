@@ -1,14 +1,16 @@
-# PlayerCard2.py
+# PlayerCard.py
 
 """This module contains the aspects of batter and pitcher Showdown Cards.
 Attributes include point value, position, control (pitchers only), on-base (batters only), and outcome ranges.
 Outcome ranges for pitchers include Out(PU), Out(SO), Out(GB), Out(FB), BB, 1B, 2B, and HR.
 Outcome ranges for pitchers include Out(SO), Out(GB), Out(FB), BB, 1B, 1B+ 2B, 3B and HR.
 
-TODO: create attribute "photo" that pulls a photo for display
+TODO: pull live data from a source & turn that data into a card.
+
+TODO: create attribute "photo" that just pulls a photo for display
 """
 
-class PlayerCard: # this functions like an interface in Java (i.e. nothing should ever be of class PlayerCard, & all cards should use the PitcherCard or BatterCard subtypes; as such, there is no initializer)
+class PlayerCard: # nothing should ever be of class PlayerCard, & all cards should use the PitcherCard or BatterCard subtypes; as such, there is no initializer
     # GETTERS AND SETTERS
     
     def getPointValue(self):
@@ -22,35 +24,11 @@ class PlayerCard: # this functions like an interface in Java (i.e. nothing shoul
     
     def getSpeed(self):
         return self._Speed
-
-    def checkPosition(self,currentPos,playersPos): # to account for cases where currentPosition is not exactly equal to but means Position (e.g. LF/RF == LF)
-        # output is of type bool
-        if currentPos == "C":
-            return playersPos == "C"
-        elif currentPos == "1B":
-            return playersPos in ["1B","IF","1B/3B",] # not yet accounting for "anyone can play 1B" factor
-        elif currentPos == "2B":
-            return playersPos in ["2B","2B/SS","2B/3B","IF"]
-        elif currentPos == "3B":
-            return playersPos in ["3B","IF","2B/3B","1B/3B",]
-        elif currentPos == "SS":
-            return playersPos in ["SS","2B/SS","IF"] # although this is a common set of positions people play, there is no "3B/SS" because their fielding almost always is materially different enough for these to be set as _Position1 and _Position2.  Could maybe add later if there is a use case.
-        elif currentPos == "LF":
-            return playersPos in ["LF","LF/RF","LFRF","OF","RF"] # made corner outfield more forgiving
-        elif currentPos == "CF":
-            return playersPos in ["CF","OF"]
-        elif currentPos == "RF":
-            return playersPos in ["RF","LF/RF","LFRF","OF","LF"] # made corner outfield more forgiving, ditto
-        elif currentPos == "P":
-            return playersPos in ["SP","RP","CP"]
-        else: # currentPos == DH
-            return True
     
     def setCurrentPosition(self,position):
         positions = ["C","1B","2B","3B","SS","LF","RF","CF","P","DH"]
-        assert(position.upper() in positions,"You have assigned an invalid position.")
-        # check that card can play the position they are passed
-        assert(self.checkPosition(position,self.getPosition1) or self.checkPosition(position,self.getPosition2),"The player passed is unable to play this position.")
+        assert position.upper() in positions
+        #TODO: check that the batterCard can play the position to which he is passed
         # figure out what error this throws if not, so the try/except block in setLineup() under class Lineup can work correctly
         self._CurrentPosition = position
     
@@ -102,7 +80,7 @@ class PitcherCard(PlayerCard):
     def __init__(self,nameFirst,nameLast,PointValue,Position,Control,IP,OutPU,OutSO,OutGB,OutFB,BB,single,double,homerun):
         assert isinstance(nameFirst, str)
         assert isinstance(nameLast, str)
-        assert Position == "SP" or Position == "RP" or Position == "CP"
+        assert Position.title() == "Starter" or Position.title() == "Reliever" or Position.title() == "Closer"
         assert isinstance(Control, int)
         assert Control >= 0
         assert Control <= 6
@@ -142,12 +120,33 @@ class BatterCard(PlayerCard):
     def getBatterOutcomes(self):
         return self._BatterOutcomes
     
+    def checkPosition(self,currentPos,playersPos): # to account for cases where currentPosition is not exactly equal to but means Position (e.g. LF/RF == LF)
+        # output is of type bool
+        if currentPos == "C":
+            return playersPos == "C"
+        elif currentPos == "1B":
+            return playersPos in ["1B","IF","1B/3B",] # not yet accounting for "anyone can play 1B" factor
+        elif currentPos == "2B":
+            return playersPos in ["2B","2B/SS","2B/3B","IF"]
+        elif currentPos == "3B":
+            return playersPos in ["3B","IF","2B/3B","1B/3B",]
+        elif currentPos == "SS":
+            return playersPos in ["SS","2B/SS","IF"] # although this is a common set of positions people play, there is no "3B/SS" because their fielding almost always is materially different enough for these to be set as _Position1 and _Position2.  Could maybe add later if there is a use case.
+        elif currentPos == "LF":
+            return playersPos in ["LF","LF/RF","LFRF","OF"]
+        elif currentPos == "CF":
+            return playersPos in ["CF","OF"]
+        elif currentPos == "RF":
+            return playersPos in ["RF","LF/RF","LFRF","OF"]
+        elif currentPos == "P":
+            return playersPos in ["SP","RP","CP"]
+        else: # currentPos == DH
+            return True
+    
     def getFielding(self): # must account for cases where currentPosition is not exactly equal to but means Position (e.g. LF/RF == LF)
         if self.checkPosition(self.getCurrentPosition(),self.getPosition1()):
-            print ("check success")
             return self._Fielding1
         else: #self.checkPosition(self.getCurrentPosition(),self.getPosition2(), I hope! If not, I deserve an error here.
-            print ("check fail, Fielding 2")
             return self._Fielding2
         # prepared a bit for the eventuality that this function will increase in complexity to account for players playing multiple positions
     
@@ -158,6 +157,7 @@ class BatterCard(PlayerCard):
         #TODO: add error messages to each assertion
         assert isinstance(nameFirst, str)
         assert isinstance(nameLast, str)
+        # the below line currently allows Position to be only 'LF', which I'll accept for now to mean LF/RF.
         assert Position1 == "C" or Position1 == "1B" or Position1 == "2B" or Position1 == "3B" or Position1 == "SS" or Position1 == "LF/RF" or Position1 == "CF" or Position1 == "OF" or Position1 == "IF" or Position1 == "2B/SS" or Position1 == "2B/3B" or Position1 == "-" or Position1 == "LFRF" or Position1 == "DH" or Position1 == "LF" or Position1 == "RF", "Position1 was passed "+str(Position1)+" for "+nameFirst+" "+nameLast+", which caused a fail."
         assert isinstance(Fielding1, int)
         assert Fielding1 >= -1

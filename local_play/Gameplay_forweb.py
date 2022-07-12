@@ -474,10 +474,8 @@ class Gameplay:
             cards = PlayerCardCreator2.createCards()
         else:
             cards = gameDict
-        #print("before both lineups set")
         self.homeLineup = self.createTeam(cards,homeTeam)
         self.awayLineup = self.createTeam(cards,awayTeam)
-        #print("both lineups set")
         # ability to create teams by accepting .txt file with args - for testing, not currently in use
         """
         if len(sys.argv) > 4:

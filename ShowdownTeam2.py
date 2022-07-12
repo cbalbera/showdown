@@ -1,4 +1,4 @@
-# ShowdownTeam.py
+# ShowdownTeam2.py
 
 """This module contains all aspects of teams in a Showdown game.
 Attributes (members) of a team are all of type PlayerCard & include:
@@ -84,7 +84,7 @@ class Lineup(list):
         self._availablePlayers = gameDict
 
         theLineup = []
-        availablePositions = ["C","1B","2B","3B","SS","LF","CF","RF","DH","P"] # at the moment, no pitcher is set whether or not there is a DH
+        availablePositions = ["C","1B","2B","3B","SS","LF","CF","RF","DH","SP"] # at the moment, no pitcher is set whether or not there is a DH
         i = 1
         masterList = []
         if not lineup:
@@ -97,33 +97,38 @@ class Lineup(list):
             "CF, Brandon Nimmo Mets, SS, Francisco Lindor Mets," and so on.  If your pitcher is hitting, simply
             place him 9th in the lineup and assign him the position SP.''').split(",")
         else:
+            print("splitting lineup")
             masterList = lineup.split(",")
+            print(masterList)
 
         lineupList = []
-        occupiedPositionsList = ["SP"]
+        occupiedPositionsList = []
         for item in masterList: # separate into players and positions, for ease of parsing
-            #print(item)
-            if masterList.index(item) == 0 or masterList.index(item) % 2 == 0: # first item is SP and then every even item is a batter
+            print(f"item is {item}")
+            if masterList.index(item) % 2 == 1: # first item is SP and then every odd item is a batter
                 lineupList.append(item.strip())
-            else: # every odd item after is a position
+                print(f"even number - lineupList is now {lineupList}")
+            else: # every even item is a position
                 theItem = item.strip().upper()
+                print(theItem)
                 if theItem in availablePositions and (theItem not in occupiedPositionsList or (theItem == 'SP' and theItem not in occupiedPositionsList[1:])): # allows for SP to be placed in lineup
                     occupiedPositionsList.append(theItem)
                 else: raise Exception("The position passed is either not a valid position, or has been assigned to more than one player.")
+                print(f"odd number - occupiedPosList is now {occupiedPositionsList}")
         
         for player in lineupList:
             if lineupList.index(player) == 0:
                 selectedPitcher = gameDict[player] # if KeyError here, your pitcher is not in the gameDict
                 self.setPitcher(selectedPitcher)
                 self.setPosition("P",selectedPitcher)
-                pitcherBats = input("Will your pitcher be hitting today? ") # there may be a bug here.  for now, use DH
+                '''pitcherBats = input("Will your pitcher be hitting today? ") # there may be a bug here.  for now, use DH
                 if pitcherBats == True or pitcherBats.upper() == "YES":
                     availablePositions.remove("DH")
                     print("The DH has been removed. Please remember to place this pitcher in the batting order.")
                     #TODO [low priority]: when pitcher is placed at bat, check that it is indeed this pitcher
                     # will build this functionality in later
                 else:
-                    print ("pitcher's not hitting.")
+                    print ("pitcher's not hitting.")'''
             else: # lineupList.index(player) > 1
                 playerPos = occupiedPositionsList[lineupList.index(player)]
                 print (player+", "+playerPos)

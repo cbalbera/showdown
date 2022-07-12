@@ -19,7 +19,6 @@ import random
 import ShowdownTeam2
 import PlayerCard2
 import PlayerCardCreator2
-import psycopg2
 import logging
 import sys
 import os
@@ -27,17 +26,6 @@ import os
 logging.basicConfig(level=logging.DEBUG, format='%(asctime)s -  %(levelname)s-  %(message)s')
 logging.debug('Start of program')
 logging.disable(logging.CRITICAL)
-
-#connect to postgreSQL
-#print("connecting in Gameplay")
-db_name = "postgres" #input("What is your database name?")
-try: db_pwd = sys.argv[-1]
-except: db_pwd = input("What is your database password?")
-try: showdown_connection = psycopg2.connect(f"dbname={db_name} user=postgres host=/tmp password={db_pwd}")
-except:
-    db_pwd = input("Incorrect password - please re-enter.")
-    showdown_connection = psycopg2.connect(f"dbname={db_name} user=postgres host=/tmp password={db_pwd}")
-showdown_cursor = showdown_connection.cursor()
 
 # class that handles all gameplay mechanics
 class Gameplay:
@@ -471,12 +459,11 @@ class Gameplay:
                     newTeam = file.read()
                     lineup = ShowdownTeam2.Lineup(cards,Lineup=newTeam)
             else:
-                print("else block.")
-                lineup = ShowdownTeam2.Lineup(cards)
+                lineup = ShowdownTeam2.Lineup(cards,Lineup=team)
         return lineup
 
     # __INITIALIZER__
-    def __init__(self,innings=0,homeTeam=None,awayTeam=None,teams="MLB"):#,HomeTeam,AwayTeam): #saved for later
+    def __init__(self,innings=0,homeTeam=None,awayTeam=None,gameDict=None,teams="MLB"):#,HomeTeam,AwayTeam): #saved for later
         self.numberInnings = innings
         while self.numberInnings < 1 or self.numberInnings > 9:
             try:
@@ -489,10 +476,14 @@ class Gameplay:
         
         # now assumes that Gameplay can be passed either a complete team (in which case moves forward as such)
         # or something invalid, in which case go through team creation flow
-        gameDict = PlayerCardCreator2.createCards()
-        self.homeLineup = self.createTeam(gameDict,homeTeam)
-        self.awayLineup = self.createTeam(gameDict,awayTeam)
-        # ability to create teams with args - not currently in sue
+        cards = ""
+        if not gameDict:
+            cards = PlayerCardCreator2.createCards()
+        else:
+            cards = gameDict
+        self.homeLineup = self.createTeam(cards,homeTeam)
+        self.awayLineup = self.createTeam(cards,awayTeam)
+        # ability to create teams by accepting .txt file with args - for testing, not currently in use
         """
         if len(sys.argv) > 4:
             if sys.argv[2].lower == "home":

@@ -1,31 +1,40 @@
-# Gameplay_forweb.py
+# Gameplay.py
 
-"""Controller module for Showdown card game for web app implementation.
+"""Controller module for Showdown card game.
 
-This module contains the subcontroller to play a single game of Showdown via a web app.
+This module contains the subcontroller to play a single game of Showdown.
 Instances reflect a single game.  To play a new game, make a new instance of Gameplay.
 
 This subcontroller manages the following and all associated die rolls:
 inning number and top/bottom, the score, the current pitcher and batter, at-bats, pitches, swings,
 which cards are on which bases & are thus allowed to take which actions, and the aforementioned actions.
 
-TODO: wherever there is a print, instead pass that data to app.py.
+TODO: create HTML/flask/jinja frontend
 
 TODO: set a timer for pitch to give the opportunity to steal without that causing delay
 
 """
 
 import random
-import ShowdownTeam2
-import PlayerCard2
-import PlayerCardCreator2
+import ShowdownTeam
+import PlayerCard
+import pyperclip
+import PlayerCardCreator1
 import logging
-import sys
 
 logging.basicConfig(level=logging.DEBUG, format='%(asctime)s -  %(levelname)s-  %(message)s')
 logging.debug('Start of program')
 logging.disable(logging.CRITICAL)
 
+"""
+#TODO: finish creating this after creating card creator
+#connect to postgreSQL
+db_name = "postgres" #input("What is your database name?")
+db_pwd = input("What is your database password?")
+showdown_connection = psycopg2.connect(f"dbname={db_name} user=postgres host=/tmp password={db_pwd}")
+showdown_cursor = showdown_connection.cursor()
+showdown_cursor.execute("SELECT player_cards FROM dba_tables;")
+"""
 # class that handles all gameplay mechanics
 class Gameplay:
     # GETTERS AND SETTERS
@@ -82,7 +91,7 @@ class Gameplay:
         return self._AwayPitcher
     
     def getTeamPitcher(self,team):
-        assert isinstance(team,ShowdownTeam2.Lineup)
+        assert isinstance(team,ShowdownTeam.Lineup)
         return team.getPitcher()
     
     '''def getHomeBatter(self):
@@ -124,15 +133,15 @@ class Gameplay:
     
     #inputs for the three below getters are of type PlayerCard
     def setFirstBase(self,player):
-        assert isinstance(player, PlayerCard2.PlayerCard) or player == None
+        assert isinstance(player, PlayerCard.PlayerCard) or player == None
         self._FirstBase = player 
     
     def setSecondBase(self,player):
-        assert isinstance(player, PlayerCard2.PlayerCard) or player == None
+        assert isinstance(player, PlayerCard.PlayerCard) or player == None
         self._SecondBase = player
         
     def setThirdBase(self,player):
-        assert isinstance(player, PlayerCard2.PlayerCard) or player == None
+        assert isinstance(player, PlayerCard.PlayerCard) or player == None
         self._ThirdBase = player
         
     def dieRoll(self):
@@ -384,7 +393,7 @@ class Gameplay:
         # on to the next batter, once every possible outcome is calculated!
     
     def incrementInning(self): 
-        # check here if game should end
+        #possibly: check here if game should end
         if self.getInningNumber() >= self.numberInnings:
             if self.getInningTopBottom() == "TOP" and self.getHomeScore() > self.getAwayScore():
                 self.activeGame = False
@@ -392,8 +401,8 @@ class Gameplay:
             elif self.getInningTopBottom() == "BOTTOM" and self.getHomeScore() < self.getAwayScore():
                 self.activeGame = False
                 print ("The away team defeated the home team by a score of "+str(self.getAwayScore())+" to "+str(self.getHomeScore())+" in "+str(self.getInningNumber())+" innings.")
-
-        # otherwise, increment inning
+            else:
+                pass
         if self.activeGame:
             if self.getInningTopBottom() == "BOTTOM":
                 self.setInningNumber(self.getInningNumber()+1)
@@ -447,69 +456,22 @@ class Gameplay:
             else:
                 self.setHomeScore(self.getHomeScore()+1)
     
-    # helper for initializer - checks if team is a .txt file, if so moves forward, if not goes thru create team prompt
-    def createTeam(self,cards,team=None):
-        if team == None:
-            lineup = ShowdownTeam2.Lineup(cards)
-        else: 
-            lineup = ShowdownTeam2.Lineup(cards,Lineup=team)
-        return lineup
-
     # __INITIALIZER__
-    def __init__(self,innings=0,homeTeam=None,awayTeam=None,gameDict=None,teams="MLB"):#,HomeTeam,AwayTeam): #saved for later
-        self.numberInnings = innings
+    def __init__(self):#,HomeTeam,AwayTeam): #saved for later
+        #self._HomeTeam = HomeTeam # not necessary as of now, will be in the future to ensure only full, legal teams are used
+        #self._AwayTeam = AwayTeam # not necessary as of now, will be in the future to ensure only full, legal teams are used
+        self.numberInnings = 0
         while self.numberInnings < 1 or self.numberInnings > 9:
             try:
-                self.numberInnings = int(input("Please select how many innings will be played (1-9). ")) # set number of innings to play
-                assert isinstance (self.numberInnings, int) and self.numberInnings >= 1 and self.numberInnings <= 9 # if fail here, program crashes, try again
+                self.numberInnings = int(input("Please select how many innings will be played. ")) # set number of innings to play
             except ValueError:
                 print("You've input something that's not a number.")
-            except AssertionError:
-                print("Please input a number of innings that is between 1 and 9.")
-        
-        # now assumes that Gameplay can be passed either a complete team (in which case moves forward as such)
-        # or something invalid, in which case go through team creation flow
-        cards = ""
-        if not gameDict:
-            cards = PlayerCardCreator2.createCards()
-        else:
-            cards = gameDict
-        #print("before both lineups set")
-        self.homeLineup = self.createTeam(cards,homeTeam)
-        self.awayLineup = self.createTeam(cards,awayTeam)
-        #print("both lineups set")
-        # ability to create teams by accepting .txt file with args - for testing, not currently in use
-        """
-        if len(sys.argv) > 4:
-            if sys.argv[2].lower == "home":
-                with open(sys.argv[1], 'r') as hfile:
-                    homeTeam = hfile.read()
-                    self.homeLineup = ShowdownTeam2.Lineup(gameDict,Lineup=homeTeam)
-                with open(sys.argv[3], 'r') as afile:
-                    awayTeam = afile.read()
-                    self.awayLineup = ShowdownTeam2.Lineup(gameDict,Lineup=awayTeam)
-            else:
-                with open(sys.argv[1], 'r') as afile:
-                    awayTeam = afile.read()
-                    self.awayLineup = ShowdownTeam2.Lineup(gameDict,Lineup=awayTeam)
-                with open(sys.argv[3], 'r') as hfile:
-                    homeTeam = hfile.read()
-                    self.homeLineup = ShowdownTeam2.Lineup(gameDict,Lineup=homeTeam)
-        elif len(sys.argv) > 2:
-            if sys.argv[2].lower == "home":
-                with open(sys.argv[1], 'r') as file:
-                    homeTeam = file.read()
-                    self.homeLineup = ShowdownTeam2.Lineup(gameDict,Lineup=homeTeam)
-                self.awayLineup = ShowdownTeam2.Lineup(gameDict)
-            else:
-                with open(sys.argv[1], 'r') as afile:
-                    awayTeam = afile.read()
-                    self.awayLineup = ShowdownTeam2.Lineup(gameDict,Lineup=awayTeam)
-                self.homeLineup = ShowdownTeam2.Lineup(gameDict)
-        else:
-            self.homeLineup = ShowdownTeam2.Lineup(gameDict)
-            self.awayLineup = ShowdownTeam2.Lineup(gameDict)
-        """
+        assert isinstance (self.numberInnings, int) and self.numberInnings >= 1 # if fail here, program crashes, try again
+        # do the above error message better
+        # or alternatively make this a select dropdown
+        # homeLineup = homeTeam.getBattingOrder()
+        self.homeLineup = ShowdownTeam.Lineup()
+        self.awayLineup = ShowdownTeam.Lineup()
 
         # awayLineup = awayTeam.getBattingOrder()
         self.PitcherOutcomes = ["Out(PU)","Out(SO)","Out(GB)","Out(FB)","BB","single","double","homerun"]
@@ -531,8 +493,8 @@ class Gameplay:
             # log active state
             print(self.getInningTopBottom()+" "+str(self.getInningNumber()))
             print(str(self.getAwayScore())+" - "+str(self.getHomeScore()))
-            print(f"Pitcher: {self.getActivePitcher().getName()} ({self.getActivePitcher().getControl()})")
-            print(f"Batter: {self.getActiveBatter().getName()} ({self.getActiveBatter().getOnBase()})")
+            print("Pitcher: "+self.getActivePitcher().getName())
+            print("Batter: "+self.getActiveBatter().getName())
             print ("O: "+str(self.getOuts()*"x"))
             if self.getFirstBase() == None:
                 print ("1B:")
@@ -598,3 +560,15 @@ class Gameplay:
                 return ("The away team defeated the home team by a score of "+str(self.getAwayScore())+" to "+str(self.getHomeScore())+" in "+str(self.inning)+" innings.")
             '''
         print ("Game over!")
+    
+newGame = Gameplay()
+''' start! This calls the initializer.  What should happen now:
+
+1. The players are prompted to input how many innings they will play.
+2. The home team is prompted to add its lineup (see ShowdownTeam.py for details).
+3. The away team is prompted to add its lineup.
+4. The scoreboard is set to 0-0 in the top of the 1st inning with 0 outs.
+5. The first batter is set to be due up next for each team.
+
+'''
+        

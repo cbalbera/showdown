@@ -3,13 +3,9 @@ import player_data_scraper
 import Gameplay_forweb
 
 
-def get_cards(teams=None):
+def get_cards(teams):
     # create list of player IDs
-    ids = ""
-    if teams == None:
-        ids = team_data_scraper.getPlayerIDs()
-    else:
-        ids = team_data_scraper.getPlayerIDs(teams)
+    ids = team_data_scraper.getPlayerIDs(teams)
     print(f"done scraping team data - ids are {ids}")
     # push player data to postgres
     player_data_scraper.scrape_data(ids)

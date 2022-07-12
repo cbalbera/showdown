@@ -47,9 +47,7 @@ player_IDs = []
 
 players_per_team_type = 9 #increase for more coverage, reduce for better speed
 
-teamnames = "Athletics,Pirates,Padres,Mariners,Giants,Cardinals,Rays,Rangers,Blue Jays,Twins,Phillies,Braves,White Sox,Marlins, Yankees, Brewers,Angels,Diamondbacks,Orioles,Red Sox, Cubs,Reds,Guardians,Rockies,Tigers,Astros,Royals,Dodgers,Nationals,Mets"
-
-def getPlayerIDs(teams=teamnames):
+def getPlayerIDs(teams):
     logging.debug("Creating list of players...")
     #print("starting getPIDs")
     teams_to_add = teams.split(",")

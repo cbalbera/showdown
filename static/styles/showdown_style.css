@@ -1,0 +1,74 @@
+body {
+    height: 100%;
+}
+
+.background_image {
+    /* image used */
+    background-image: url("https://assets.simpleviewinc.com/simpleview/image/fetch/q_75/https://assets.simpleviewinc.com/simpleview/image/upload/crm/newyorkstate/ballpark_interior_040816_ml_046_44076e87-e925-d461-fb20ca2636d99f30.jpg");
+    
+    /* width & height: full*/
+    width: 110%;
+    height: auto;
+    margin: -10px -10px -10px -10px;
+
+    /* darken slightly */
+    filter: brightness(40%);
+
+    /* position and scale */
+    position: absolute;top:0;left:0;z-index:-1;
+    background-repeat: no-repeat;
+    background-size: cover;
+    padding: 0px 0px 400px 0px
+}
+
+.team_creation {
+    box-sizing: border-box;
+}
+
+.row {
+    display: flex;
+    margin-left:-5px;
+    margin-right:-5px;
+  }
+  
+.column {
+    flex: 50%;
+    padding: 5px;
+  }
+
+h1 {
+    position: relative;
+    left: 10%;
+    top: 10%;
+    z-index: 5;
+    color: #2b2424;
+    font-size: 36px;
+}
+
+h2 {
+    position: relative;
+    left: 10%;
+    top: 10%;
+    z-index: 5;
+    color: #4e4949;
+    font-size: 24px;
+}
+
+thead {
+    position: relative;
+    display: block;
+    top: 10%;
+}
+
+tbody {
+    display: block;
+    top: 10%;
+}
+
+caption {
+    position: relative;
+    display: block;
+    font-size: 18px;
+    color: #4e4949;
+    top: 10%;
+}

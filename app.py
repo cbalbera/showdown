@@ -1,7 +1,8 @@
-from flask import Flask, render_template, request#, redirect, session
+from flask import Flask, render_template, g, request#, redirect, session
 #import werkzeug
 import play_showdown
 import psycopg2
+from psycopg2 import pool # https://stackoverflow.com/questions/54638374/psycopg2-flask-tying-connection-to-before-request-teardown-appcontext
 import os
 from psycopg2.extras import RealDictCursor
 from random import randint
@@ -13,29 +14,41 @@ POSITIONS = ["C","1B","2B","3B","SS","LF","CF","RF","DH"]
 
 db_name = "showdown"
 db_pwd = os.environ["PSQL_DB_PASSWORD"]
-showdown_connection = psycopg2.connect(f"dbname={db_name} user=postgres host=/tmp password={db_pwd}")
-showdown_cursor = showdown_connection.cursor(cursor_factory=RealDictCursor)
+#showdown_connection = psycopg2.connect(f"dbname={db_name} user=postgres host=/tmp password={db_pwd}")
+#showdown_connection = psycopg2.connect(f"dbname={db_name} user=postgres host=localhost password={db_pwd}")
+#showdown_cursor = showdown_connection.cursor(cursor_factory=RealDictCursor)
+
+postgres_pool = psycopg2.pool.SimpleConnectionPool(1,10,user='postgres',password=db_pwd,host='localhost',port='5432',database=db_name)
+
+def get_db():
+    if 'db' not in g:
+        g.db = postgres_pool.getconn()
+    return g.db
+
+@app.teardown_appcontext
+def close_conn(e):
+    db = g.pop('db', None)
+    if db is not None:
+        postgres_pool.putconn(db)
+
 id = randint(1,100000) #ID of this game - to update methodology for storing game lineup data & other data
 
-print("made it to routes")
 @app.route("/")
 def home():
     return render_template("home.html")
 
-print("made it to setup route")
 @app.route("/set_up_teams",methods=["GET","POST"]) #this may need to be two methods
 def set_up_teams():
     #if request.method == "POST":
      #   return redirect("new_game.html")
     return render_template("set_up_teams.html",positions=POSITIONS, teams=TEAMS)
 
-print("made it to newgame route")
 @app.route("/new_game",methods=["GET","POST"])
 def new_game():
     formdata = request.form
     showdown_team_away=""
     showdown_team_home=""
-    innings = "1"
+    innings = 6
     # array: format [positions], [player names], [teams]
     showdown_team_array_away = [["SP"],[],[]]
     showdown_team_array_home = [["SP"],[],[]]
@@ -58,7 +71,7 @@ def new_game():
                 showdown_team_array_home[1].append(value)
             elif key == 'playername_h':
                 showdown_team_array_home[1].append(value)
-            else: #key == 'innings'
+            elif key == 'innings':
                 innings = int(innings)
 
     # add represented teams to list
@@ -82,6 +95,9 @@ def new_game():
         if i < 9:
             showdown_team_away = showdown_team_away+", "
     
+    # for test purposes
+    showdown_team_away = "SP, Carlos Carrasco Mets, 1B, Pete Alonso Mets, 2B, Jeff McNeil Mets, SS, Francisco Lindor Mets, 3B, Eduardo Escobar Mets, LF, Mark Canha Mets, CF, Brandon Nimmo Mets, RF, Starling Marte Mets, DH, Luis Guillorme Mets, C, Willson Contreras Cubs"
+
     print (showdown_team_away)
 
     # home team
@@ -96,6 +112,10 @@ def new_game():
     for team in teams_list:
         teams_list_final += team + (", ")
     teams_list_final = teams_list_final[:-2]
+
+    # for test purposes
+    teams_list_final = "Mets, Cubs"
+
     print(teams_list_final)
     
     occupiedPositions = []
@@ -111,36 +131,62 @@ def new_game():
         if i < 9:
             showdown_team_home = showdown_team_home+", "
     
-    print (showdown_team_home)
-    
-    # add both teams to cursor
-    showdown_cursor.execute(f"INSERT INTO teamtext VALUES({id},'{teams_list_final}',{innings},'{showdown_team_away}','{showdown_team_home}')")
-    showdown_connection.commit()
+    # for test purposes
+    showdown_team_home = "SP, David Peterson Mets, 1B, Pete Alonso Mets, 2B, Jeff McNeil Mets, SS, lindor Mets, 3B, escobar Mets, LF, canha Mets, CF, nimmo Mets, RF, marte Mets, DH, guillorme Mets, C, contreras Cubs"
 
+    print (showdown_team_home)
+
+    #print("getting db connect")
+    db = get_db()
+    #print("getting cursor")
+    showdown_cursor = db.cursor()
+    #print("before insert into cursor")
+    showdown_cursor.execute(f"INSERT INTO teamtext VALUES({id},'{teams_list_final}',{innings},'{showdown_team_away}','{showdown_team_home}')")
+    #print("added to cursor - tbd if this works (previously had committed via connection, not db)")
+    db.commit()
+    #print("committed")
+    #print("getting teams list")
     #play_showdown.get_cards(teams_list)
 
     #play_showdown.playBall(home=showdown_team_home,away=showdown_team_away,inning_count=innings)
     return render_template("new_game.html")
 
-print("made it to playball route")
+#print("made it to playball route")
 @app.route("/play_ball",methods=["GET","POST"])
 def play_ball():
-    
-    showdown_cursor.execute(f"SELECT teams_list FROM teamtext WHERE id={id}")
-    teams_list = showdown_cursor.fetchone()[0]
-    play_showdown.get_cards(teams_list)
+    print("getting db connect")
+    db = get_db()
+    print("getting cursor")
+    showdown_cursor = db.cursor()
+    print("before insert into cursor")
+    print(f"query is: SELECT * FROM teamtext WHERE id={id}")
+    showdown_cursor.execute(f"SELECT * FROM teamtext WHERE id={id}")
+    print("first select successful")
+    data = showdown_cursor.fetchall()
+    showdown_cursor.close()
+    print(data)
+    teams_list = data[0][1]
+    print(f"about to call get_cards for teams {teams_list}")
+    #play_showdown.get_cards(teams_list)
+    innings = data[0][2]
+    away_team = data[0][3]
+    home_team = data[0][4]
+    """print("getting innings")
     showdown_cursor.execute(f"SELECT innings FROM teamtext WHERE id={id}")
     innings = int(showdown_cursor.fetchone()[0])
+    print("getting away_team lineup")
     showdown_cursor.execute(f"SELECT away_team FROM teamtext WHERE id={id}")
     away_team = showdown_cursor.fetchone()[0]
+    print("getting home_team lineup")
     showdown_cursor.execute(f"SELECT home_team FROM teamtext WHERE id={id}")
     home_team = showdown_cursor.fetchone()[0]
+    print("calling playBall")"""
     play_showdown.playBall(home=home_team,away=away_team,inning_count=innings)
 
     return render_template("play_ball.html")
 
-showdown_connection.close()
-print("made it to end, what's up?")
+#showdown_connection.close()
+#print("made it to end")
 
 #app.run(debug=True, host="0.0.0.0", port=5000)
 

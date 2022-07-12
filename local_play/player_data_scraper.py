@@ -16,16 +16,14 @@ logging.debug('Start of player_data_scraper')
 
 db_name = "showdown"
 db_pwd = os.environ["PSQL_DB_PASSWORD"]
-def get_db_local():
-    #showdown_connection = psycopg2.connect(f"dbname={db_name} user=postgres host=/tmp password={db_pwd}")
-    showdown_connection = psycopg2.connect(f"dbname={db_name} user=postgres host=localhost password={db_pwd}")
-    #showdown_cursor = showdown_connection.cursor(cursor_factory=RealDictCursor)
-    return showdown_connection
-
+"""
+#showdown_connection = psycopg2.connect(f"dbname={db_name} user=postgres host=/tmp password={db_pwd}")
+showdown_connection = psycopg2.connect(f"dbname={db_name} user=postgres host=localhost password={db_pwd}")
+showdown_cursor = showdown_connection.cursor(cursor_factory=RealDictCursor)
+"""
 
 postgres_pool = psycopg2.pool.SimpleConnectionPool(1,10,user='postgres',password=db_pwd,host='localhost',port='5432',database=db_name)
 
-"""
 def get_db():
     if 'db' not in g:
         g.db = postgres_pool.getconn()
@@ -36,7 +34,7 @@ def close_conn(e):
     db = g.pop('db', None)
     if db is not None:
         postgres_pool.putconn(db)
-"""
+
 
 
 #showdown_cursor.execute("CREATE TABLE IF NOT EXISTS pitcher_stats (id int PRIMARY KEY, team text, firstname text, lastname text, position text, throws char, bats char,inningspitched int,abs_against int, strikeouts int, groundouts int, flyouts int, walks int, hits int, non_hr_xbh int, home_runs int, games int, starts int, earned_runs int, save_chances int) ")
@@ -111,7 +109,7 @@ logging.debug("before calling getPlayerIDs")
 def scrape_data(player_IDs):
     #psql server pooling
     print("getting db")
-    db = get_db_local()
+    db = get_db()
     print("getting cursor in p_data_scraper")
     showdown_cursor = db.cursor()
 
@@ -132,7 +130,7 @@ def scrape_data(player_IDs):
         if player_stats["stats"] == []: continue #exclude no MLB stats
 
         # set basics
-        #print(f"setting starting details for playerid {i}")
+        print(f"setting starting details for playerid {i}")
         id = player_stats["id"]
         first_name = player_stats["first_name"].replace("'","")
         last_name = player_stats["last_name"].replace("'","")
@@ -212,7 +210,7 @@ def scrape_data(player_IDs):
 
             no_of_chances = 0 #for fielding calc
 
-            #print("adding a hitter")
+            print("adding a hitter")
 
             # loop to set all stat values
             for j in player_stats["stats"]:
@@ -233,10 +231,7 @@ def scrape_data(player_IDs):
                     sb_percentage = j["stats"]["stolenBasePercentage"]
                 
                 # fielding stats for main position - will eventually consider having a 2nd position
-                elif pos == "TWP":
-                    pos = "DH"
-
-                elif j["group"] == "fielding" and float(j["stats"]["gamesPlayed"]) > 20 and j["stats"]["position"]["abbreviation"] != "P":
+                elif j["group"] == "fielding" and float(j["stats"]["fielding"]) > 0.3:
                     field_percentage = j["stats"]["fielding"]
                     range_factor = j["stats"]["rangeFactorPer9Inn"]
                     if j["stats"]["chances"] > no_of_chances:
@@ -246,11 +241,7 @@ def scrape_data(player_IDs):
                         pos_2 = j["stats"]["position"]["abbreviation"]
                     no_of_chances = max(no_of_chances,j["stats"]["chances"])
                     #TODO [low priority]: update SQL database and PlayerCard to accept 2 positions
-                
-            if at_bats < 40:
-                continue
-                    
-            print(f"adding {first_name} {last_name} to cursor at position {pos}")
+            # print(f"adding {first_name} {last_name} to cursor at position {pos}")
             # add to DB
             showdown_cursor.execute(f"INSERT INTO hitter_stats VALUES({id},'{team}','{first_name}','{last_name}','{pos}','{pitch_hand}','{bat_side}',{at_bats},{strikeouts}, {groundouts}, {flyouts}, {walks}, {hits}, {doubles},{triples},{home_runs}, {sb_attempts}, '{sb_percentage}', '{field_percentage}', '{range_factor}')") # add to SQL database
 
